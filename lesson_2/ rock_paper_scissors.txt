@@ -1,0 +1,7 @@
+Score 
+  - has a score
+  - can increment
+  - has MAX_SCORE constant
+
+Could put in player class as an ivar.
+  - v
