@@ -1,6 +1,4 @@
 class Move
-  attr_reader :value, :beats
-
   def initialize(value, winning_moves)
     @value = value
     @beats = winning_moves
@@ -13,6 +11,10 @@ class Move
   def to_s
     value
   end
+
+  protected
+
+  attr_reader :value, :beats
 end
 
 class Rock < Move

@@ -1,20 +1,6 @@
 load 'player.rb'
 
 class Human < Player
-  def set_name
-    answer = ''
-
-    loop do
-      puts "What's your name?"
-      answer = gets.chomp
-      break unless answer.empty? || answer.size > 10 || answer.start_with?(' ')
-      puts 'Sorry, must enter a value less than 10 characters that doesn\'t '\
-           'start with a space.'
-    end
-
-    answer
-  end
-
   def choose
     choice = ''
 
@@ -31,5 +17,21 @@ class Human < Player
     end
 
     super(choice)
+  end
+
+  private
+
+  def set_name
+    answer = ''
+
+    loop do
+      puts "What's your name?"
+      answer = gets.chomp
+      break unless answer.empty? || answer.size > 10 || answer.start_with?(' ')
+      puts 'Sorry, must enter a value less than 10 characters that doesn\'t '\
+           'start with a space.'
+    end
+
+    answer
   end
 end

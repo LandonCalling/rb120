@@ -7,12 +7,14 @@ class Computer < Player
                  'Sonny'    => %w(sp sp l l r),
                  'Number 5' => %w(pa r) }
 
-  def set_name
-    ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5'].sample
-  end
-
   def choose
     choice = MOVE_TYPES[name].sample
     super(choice)
+  end
+
+  private
+
+  def set_name
+    ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5'].sample
   end
 end

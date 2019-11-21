@@ -13,10 +13,6 @@ class Score
     self.score = 0
   end
 
-  def to_s
-    score
-  end
-
   protected
 
   attr_writer :score

@@ -11,6 +11,7 @@ class RPSGame
   end
 
   def play
+    system('clear') || system('cls')
     display_welcome_message
 
     loop do
@@ -31,7 +32,8 @@ class RPSGame
 
   protected
 
-  attr_accessor :human, :computer, :round
+  attr_accessor :round
+  attr_reader :human, :computer
 
   private
 
@@ -70,8 +72,8 @@ class RPSGame
 
   def display_score
     puts "Score after round #{round}: "\
-         "#{human.name}: #{human.score.to_s}, "\
-         "#{computer.name}: #{computer.score.to_s}"
+         "#{human.name}: #{human.score.score}, "\
+         "#{computer.name}: #{computer.score.score}"
   end
 
   def max_reached?

@@ -9,7 +9,8 @@ class Player
                    l: 'lizard',
                    sp: 'spock' }
 
-  attr_accessor :move, :name, :score, :history
+  attr_accessor :history
+  attr_reader :move, :name, :score
 
   def initialize
     @name = set_name
@@ -28,4 +29,8 @@ class Player
 
     history << CHOICE_MAP[choice.to_sym]
   end
+
+  protected
+
+  attr_writer :move
 end
