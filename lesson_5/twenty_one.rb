@@ -19,6 +19,16 @@ module Hand
     hand_total
   end
 
+  def add_card(new_card)
+    cards.push(new_card)
+  end
+
+  def reset
+    self.cards = []
+  end
+
+  private
+
   def draw_cards
     puts create_card_end
     puts create_card_top_value_line
@@ -29,16 +39,6 @@ module Hand
     puts create_card_bottom_value_line
     puts create_card_end
   end
-
-  def add_card(new_card)
-    cards.push(new_card)
-  end
-
-  def reset
-    self.cards = []
-  end
-
-  private
 
   def create_card_end
     string = ''
@@ -81,45 +81,38 @@ module Hand
   end
 end
 
+module Prompt
+  def prompt(message)
+    puts "=> #{message}"
+  end
+end
+
 class Participant
   include Hand
+  include Prompt
 
-  attr_accessor :name, :cards
+  attr_reader :name
 
   def initialize
     @cards = []
     set_name
   end
+
+  private
+
+  attr_accessor :cards
+  attr_writer :name
 end
 
 class Player < Participant
-  protected
-
-  attr_accessor :move
-
-  public
-
-  def set_name
-    name = ''
-
-    loop do
-      puts '=> Please enter your name:'
-      name = gets.chomp
-      break unless name.start_with?(' ') || name.empty?
-      puts "=> You must enter a name, and it can't start with a space."
-    end
-
-    self.name = name
-  end
-
   def choose_hit_stay
     answer = ''
 
     loop do
-      puts '=> Would you like to [h]it or [s]tay?'
+      prompt('Would you like to [h]it or [s]tay?')
       answer = gets.chomp.downcase
       break if %w(h hit s stay).include?(answer)
-      puts "#{answer} is not a valid choice.  Try again."
+      prompt("#{answer} is not a valid choice.  Try again.")
     end
 
     self.move = answer
@@ -128,26 +121,71 @@ class Player < Participant
   def stay?
     move == 's' || move == 'stay'
   end
+
+  def print_hand
+    prompt("#{name} hand:")
+    draw_cards
+    prompt("#{name} current total: #{total}")
+  end
+
+  private
+
+  attr_accessor :move
+
+  def set_name
+    name = ''
+
+    loop do
+      prompt('Please enter your name:')
+      name = gets.chomp
+      break unless name.start_with?(' ') || name.empty?
+      prompt("You must enter a name, and it can't start with a space.")
+    end
+
+    self.name = name
+  end
 end
 
 class Dealer < Participant
   NAMES = ['Chappie', 'Johnny 5', 'Wall-E', 'Eve']
   DEALER_STAY = 17
 
-  def set_name
-    self.name = NAMES.sample
+  def print_hand(turn)
+    if turn == 'player'
+      print_hand_hidden
+    else
+      print_full_hand
+    end
   end
 
   def stay?
     total >= DEALER_STAY
+  end
+
+  private
+
+  def set_name
+    self.name = NAMES.sample
+  end
+
+  def print_hand_hidden
+    placeholder = cards[0]
+    cards[0] = Card.new(:unknown, '?')
+    prompt("#{name} hand:")
+    draw_cards
+    cards[0] = placeholder
+  end
+
+  def print_full_hand
+    prompt("#{name} hand:")
+    draw_cards
+    prompt("#{name} current total: #{total}")
   end
 end
 
 class Deck
   SUITS = [:hearts, :spades, :clubs, :diamonds]
   VALUES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']
-
-  attr_accessor :cards
 
   def initialize
     @cards = []
@@ -166,6 +204,10 @@ class Deck
       cards.push(Card.new(suit, value))
     end
   end
+
+  private
+
+  attr_accessor :cards
 end
 
 class Card
@@ -189,8 +231,6 @@ class Card
                   '|    /  |  ',
                   '|   |   |  ',
                   '|   .   |  ']
-
-  attr_reader :suit, :value
 
   def initialize(suit, value)
     @suit = suit
@@ -238,9 +278,15 @@ class Card
   def ace?
     value == 'A'
   end
+
+  private
+
+  attr_reader :suit, :value
 end
 
 class Game
+  include Prompt
+
   def initialize
     @player = Player.new
     @dealer = Dealer.new
@@ -250,23 +296,25 @@ class Game
 
   def start
     display_welcome_message
-    deal_cards
-    display_cards
-    player_turn
-    display_cards
-    dealer_turn unless player.busted?
-    show_result
+
+    loop do
+      deal_cards
+      display_cards
+      player_turn
+      display_cards
+      dealer_turn unless player.busted?
+      show_result
+      break unless play_again?
+      reset
+    end
+
     display_goodbye_message
   end
 
-  protected
-
-  attr_writer :player
-  attr_accessor :turn
-
   private
 
-  attr_reader :player, :dealer, :deck
+  attr_reader :player, :dealer, :deck, :turn
+  attr_writer :turn
 
   def display_welcome_message
     prompt("Welcome to Twenty One, #{player.name}!")
@@ -276,10 +324,6 @@ class Game
     prompt('If either you or the dealer get over 21 they bust.')
     prompt('Hit ENTER to start the game.')
     gets.chomp
-  end
-
-  def prompt(message)
-    puts "=> #{message}"
   end
 
   def deal_cards
@@ -312,34 +356,8 @@ class Game
 
   def display_cards
     system('clear') || system('cls')
-    print_dealer_hand
-    print_player_hand
-  end
-
-  # rubocop: disable Metrics/AbcSize
-  def print_dealer_hand
-    placeholder = nil
-
-    if turn == 'player'
-      placeholder = dealer.cards[0]
-      dealer.cards[0] = Card.new(:unknown, '?')
-    end
-
-    prompt("#{dealer.name} hand:")
-    dealer.draw_cards
-
-    unless turn == 'player'
-      prompt("#{dealer.name} current total: #{dealer.total}")
-    end
-
-    dealer.cards[0] = placeholder if placeholder
-  end
-  # rubocop: enable Metrics/AbcSize
-
-  def print_player_hand
-    prompt("#{player.name} hand:")
-    player.draw_cards
-    prompt("#{player.name} current total: #{player.total}")
+    dealer.print_hand(turn)
+    player.print_hand
   end
 
   # rubocop: disable Metrics/AbcSize
@@ -357,6 +375,26 @@ class Game
     end
   end
   # rubocop: enable Metrics/AbcSize
+
+  def play_again?
+    answer = nil
+
+    loop do
+      puts 'Would you like to play again? (y/n):'
+      answer = gets.chomp.downcase
+      break if %w(y yes n no).include?(answer)
+      puts 'That is not a valid choice.  Please try again.'
+    end
+
+    %w(y yes).include?(answer)
+  end
+
+  def reset
+    player.reset
+    dealer.reset
+    deck.reset
+    self.turn = 'player'
+  end
 
   def display_goodbye_message
     prompt("Thanks for playing Twenty One, #{player.name}!")
